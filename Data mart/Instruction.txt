@@ -1,0 +1,7 @@
+TASK : CREATING YOUR DATA MART FROM THE FOLLOWING DATA SOURCES
+
+-Source1: Flat file source: Combine the employee data (employee.csv, employee.json, employee.csv)
+-Source2: api source: https://jsonplaceholder.typicode.com/posts
+-Source3: database source - Use the account table your snowflake in one of the previous exercise
+-Create a New schema (ASSIGNEMENT3) under your database
+Load tables in the data mart - 3 tables in total
