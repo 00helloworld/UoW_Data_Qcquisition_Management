@@ -48,6 +48,7 @@ def generate_facebook_data():
 
 # Produce data to Kafka topic
 topic_name = 'facebook-stream'
+print(topic_name)
 
 try:
     while True:

@@ -1,3 +1,9 @@
+'''
+1. cp to DAGs path
+2. restart airflow: airflow standalone
+3. excute
+'''
+
 # Import libararies
 from datetime import timedelta
 from airflow import DAG
@@ -51,13 +57,14 @@ prepare = BashOperator(
         BloodPressure NUMBER,
         SkinThickness NUMBER,
         Insulin NUMBER,
-        BMI NUMBER,
-        DiabetesPedigreeFunction NUMBER,
+        BMI FLOAT,
+        DiabetesPedigreeFunction FLOAT,
         Age NUMBER,
         Outcome NUMBER
     );"
     '''
 )
+
 # Extract
 extract = BashOperator(
     task_id = 'extract',
@@ -69,6 +76,7 @@ extract = BashOperator(
         
     '''
 )
+
 # Transform
 def transform_data():
     header_list = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 
@@ -82,6 +90,7 @@ transform = PythonOperator(
     python_callable=transform_data,
     dag=dag
 )
+
 # Load
 load = BashOperator(
     task_id = 'load',
@@ -94,6 +103,7 @@ load = BashOperator(
                         FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);"
     '''
 )
+
 # Clear
 clear = BashOperator(
     task_id = 'clear',

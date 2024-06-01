@@ -1,3 +1,9 @@
+'''
+1. cp to DAGs path
+2. restart airflow: airflow standalone
+3. excute
+'''
+
 # Import libararies
 from datetime import timedelta
 from airflow import DAG
@@ -51,6 +57,7 @@ prepare = BashOperator(
     );"
     '''
 )
+
 # Extract
 extract = BashOperator(
     task_id = 'extract',
@@ -65,6 +72,7 @@ extract = BashOperator(
         
     '''
 )
+
 # Transform
 transform = BashOperator(
     task_id = 'transform',
@@ -75,6 +83,7 @@ transform = BashOperator(
         echo "Transform Done";
     '''
 )
+
 # Load
 load = BashOperator(
     task_id = 'load',
@@ -87,6 +96,7 @@ load = BashOperator(
                         FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);"
     '''
 )
+
 # Clear
 clear = BashOperator(
     task_id = 'clear',
