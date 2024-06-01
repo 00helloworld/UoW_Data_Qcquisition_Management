@@ -2,17 +2,18 @@
 from datetime import timedelta
 from airflow import DAG
 from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
+import pandas as pd
 
 # Config snowflake
-DATA_URL = "https://elasticbeanstalk-us-east-2-340729127361.s3.us-east-2.amazonaws.com/web-server-access-log.txt.gz"
+DATA_URL = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
 DATA_PATH = "/Users/dongyanshen/Desktop/DYS/UoW_AI_Course/Data_Management/Mini_Project"
-TEMP_GZ = "web-server-access-log.txt.gz"
-TXT = "web-server-access-log.txt"
+CSV = "pima-indians-diabetes.csv"
 TRANSFORMED_CSV = "transformed_data.csv"
 SNOWFLAKE_DB = "YANSHEN_DIT"
 SNOWFLAKE_SCHEMA = "MINI_PROJECT"
-SNOWFLAKE_TABLE = "SERVER_LOG"
+SNOWFLAKE_TABLE = "DIABETES"
 SNOWSQL_CMD = f"snowsql -c my_connection -d {SNOWFLAKE_DB} -s {SNOWFLAKE_SCHEMA}"
 
 # Define Default arguments
@@ -28,10 +29,11 @@ default_args = {
 
 # Define DAG
 dag = DAG(
-    dag_id='Mini_Project_Q1',
+    dag_id='Mini_Project_Q2',
     default_args=default_args,
-    description='Mini_Project_Q1',
-    schedule_interval=timedelta(days=1)
+    description='Mini_Project_Q2',
+    schedule_interval=timedelta(hours=1),
+    catchup=False
 )
 
 # Define Tasks
@@ -44,10 +46,15 @@ prepare = BashOperator(
         echo "Preparing...";
         echo "Creating Table on Snowflake...";
         {SNOWSQL_CMD} -q "CREATE OR REPLACE TABLE {SNOWFLAKE_TABLE} (
-        timestamp TIMESTAMP,
-        latitude FLOAT,
-        longitude FLOAT,
-        visitorid CHAR(37)
+        Pregnancies NUMBER,
+        Glucose NUMBER,
+        BloodPressure NUMBER,
+        SkinThickness NUMBER,
+        Insulin NUMBER,
+        BMI NUMBER,
+        DiabetesPedigreeFunction NUMBER,
+        Age NUMBER,
+        Outcome NUMBER
     );"
     '''
 )
@@ -58,22 +65,22 @@ extract = BashOperator(
     bash_command = f'''
         echo "Extracting...";
         echo "Downloading File...";
-        curl --output {DATA_PATH}/{TEMP_GZ} {DATA_URL};
-
-        echo "Decompressing...";
-        gunzip -f {DATA_PATH}/{TEMP_GZ} > {DATA_PATH}/{TXT};
+        curl --output {DATA_PATH}/{CSV} {DATA_URL};
         
     '''
 )
 # Transform
-transform = BashOperator(
-    task_id = 'transform',
-    dag = dag,
-    bash_command = f'''
-        echo "Transforming...";
-        cut -d '#' -f 1-4 {DATA_PATH}/{TXT} | tr '#' ',' > {DATA_PATH}/{TRANSFORMED_CSV};
-        echo "Transform Done";
-    '''
+def transform_data():
+    header_list = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 
+                   'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
+    data = pd.read_csv(f'{DATA_PATH}/{CSV}', header=None, names=header_list)
+    transformed_data = data[data.Glucose > 120]
+    transformed_data.to_csv(f'{DATA_PATH}/{TRANSFORMED_CSV}', index=False)
+
+transform = PythonOperator(
+    task_id='transform',
+    python_callable=transform_data,
+    dag=dag
 )
 # Load
 load = BashOperator(
@@ -93,7 +100,7 @@ clear = BashOperator(
     dag = dag,
     bash_command = f'''
         echo "Clearing...";
-        rm -f {DATA_PATH}/{TXT} {DATA_PATH}/{TEMP_GZ} {DATA_PATH}/{TRANSFORMED_CSV};
+        rm -f {DATA_PATH}/{CSV} {DATA_PATH}/{TRANSFORMED_CSV};
     '''
 )
 
