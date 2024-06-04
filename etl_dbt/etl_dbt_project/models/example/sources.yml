@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: YANSHEN_DIT
+    description: "Class test data"
+    database: YANSHEN_DIT
+    schema: CLASS_TEST
+    tables:
+      - name: CUSTOMERS
+        description: "This is the Customer Table info"
+      - name: ORDERS
+        description: "This is orders table info"
+      - name: PRODUCT
+        description: "This is a product table info"
+
+# models:
+#   # Define your models here...
